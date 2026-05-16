@@ -1,13 +1,37 @@
-const express = require(“express”);
-const cors = require(“cors”);
+const express = require("express");
+const cors = require("cors");
+const http = require("http");
+const { Server } = require("socket.io");
+require("dotenv").config();
+
 const app = express();
-const PORT = process.env.PORT || 3001;
+const server = http.createServer(app);
 
 app.use(cors());
 app.use(express.json());
 
-app.get(”/”, (req, res) => {
-res.json({ status: “ok”, service: “TopoArb” });
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
+app.get("/", (req, res) => {
+    res.send("Topoarb Proxy Server is Running.");
+});
+
+io.on("connection", (socket) => {
+    console.log("Client connected:", socket.id);
+    
+    socket.on("disconnect", () => {
+        console.log("Client disconnected:", socket.id);
+    });
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
 
 app.post(”/broker/exness/order”, async (req, res) => {
